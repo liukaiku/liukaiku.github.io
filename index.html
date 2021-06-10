@@ -23,12 +23,13 @@
         background-size: cover;
     }
 </style>
-<body class=".container">
+
+<body>
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="http://code.jquery.com/jquery-1.11.2.min.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="bootstrap/js/bootstrap.min.js"></script>
-    <svg width="1900" height="920" id="mainsvg" class="svgs"></svg>
+    <svg width="1900" height="920" id="mainsvg" class="svgs" .container></svg>
     <script>
         const svg = d3.select('#mainsvg');
         const width = +svg.attr('width');
