@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" 
+  href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+  <title>liukai</title>
+  <script src="https://d3js.org/d3.v6.min.js"></script>
+  <style>
+    body
+    {
+      background-image: url('app.jpg');
+      background-size: cover;
+    }
+  </style>
+  
+</head>
+ <body>
+ 
+  <svg width="1900" height="920" id="mainsvg" class="svgs" ></svg>  
+<script>
+  const svg = d3.select('#mainsvg');
+  const width = +svg.attr('width');
+  const height = +svg.attr('height');
+  const margin = {top: 100, right: 150, bottom: 120, left: 150};
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  const xValue = d => d['使用时间'] ;
+  const yValue = d => d['新增使用时间'] ;
+  const rValue = d => (d['使用时间']/10);
+  const keyHint = '软件';
+  let xScale, yScale;
+  let maxX, maxY;
+  let dates; 
+  let aduration = 2000;
+  //let metatime;
+ 
+  const xAxisLabel = '累计使用时间（分钟）';
+  const yAxisLabel = '每天使用时间（分钟）';
+  
+  var color = {
+            "微信": "#00ff55",
+            "抖音": "#E69D87",
+            "微博": "#ffaa00",
+            "QQ": "#de5991",
+            "虎牙": "#ff5500",
+            "腾讯视频": "#47c0d4",
+            "bilibili": "#759AA0",
+              }
+  const renderinit = function(data, seq){
+   xScale = d3.scaleLinear()
+  .domain(d3.extent(data, xValue)) 
+  .range([0, innerWidth])
+  .nice();
+
+  yScale = d3.scaleLinear()
+  .domain(d3.extent(data, yValue).reverse()) // remember to use reverse() to make y-axis start from the bottom; 
+  .range([0, innerHeight])
+  .nice();
+
+  // generate maxX and maxY; 
+  maxX = xScale(d3.max(data, xValue));
+  maxY = yScale(d3.max(data, yValue));
+  
+  const g = svg.append('g')
+  .attr('transform', `translate(${margin.left}, ${margin.top})`)
+  .attr('id', 'maingroup');
+
+  let h = g.append("g")
+  h.append('text')
+  .text("手机APP使用时间")
+  .attr("x", innerWidth -1100)
+  .attr("y", innerHeight -720)
+  .attr('font-size', '5em')
+  .attr('font-family','幼圆')
+
+
+
+  const yAxis = d3.axisLeft(yScale)
+  .tickSize(-innerWidth)
+  .tickPadding(10);
+
+  const xAxis = d3.axisBottom(xScale)
+  .tickSize(-innerHeight)
+  .tickPadding(10);
+
+  let yAxisGroup = g.append('g').call(yAxis)
+  .attr('id', 'yaxis');
+  yAxisGroup.append('text')
+  .attr('font-size', '3em')
+  .attr('transform', `rotate(-90)`)
+  .attr('x', -innerHeight /2)
+  .attr('y', -90)
+  .attr('fill', '#333333')
+  .attr('font-weight', 'bold')
+  .text(yAxisLabel)
+  .attr('text-anchor', 'middle')
+  yAxisGroup.selectAll('.domain').remove(); // we can select multiple tags using comma to seperate them and we can use space to signify nesting; 
+  
+  let xAxisGroup = g.append('g').call(xAxis)
+ .attr('transform', `translate(${0}, ${innerHeight})`)
+ .attr('id', 'xaxis');
+  xAxisGroup.append('text')
+ .attr('font-size', '3em')
+ .attr('y', 90)
+ .attr('x', innerWidth / 2)
+ .attr('fill', '#333333')
+ .attr('font-weight', 'bold')
+ .text(xAxisLabel);
+ xAxisGroup.selectAll('.domain').remove();
+ 
+ d3.selectAll('.tick text').attr('font-size','3em');
+ 
+ const software_color=[
+          "#00ff55",
+          "#E69D87",
+          "#ffaa00",
+          "#de5991",
+          "#ff5500",
+          "#47c0d4",
+          "#759AA0",
+         ]
+
+ const software_name=[
+          "微信",
+          "抖音",
+          "微博",
+          "QQ",
+          "虎牙",
+          "腾讯视频",
+          "bilibili",
+        ];
+
+const software = d3.select('#maingroup').selectAll(".software")
+.data(software_name)
+.enter().append("g")
+.attr("class", "software")
+.attr("transform", function(d, i) { return "translate(" + (innerWidth + 10) + "," + (i * 25 + 300) + ")"; });
+
+/*
+software.append("rect")
+.data(software_name) 
+.attr("x", 0)
+.attr("y", -300)
+.attr("width", 50)
+.attr("height", 20)
+.style("fill", function (d,i) { 
+  return software_color[i];});
+
+software.append("text")
+.data(software_name) 
+.attr('class', 'software_text')
+.attr("x", 60)
+.attr("y", -292)
+.attr("dy", ".5em")
+.style("text-anchor", "start")
+.text(function (d,i) {return software_name[i];}); 
+  */
+};
+  const renderupdate = function(seq){
+  const g = d3.select('#maingroup');
+  time = seq[0]['日期'];
+  g.selectAll('.date_text').remove();
+  g.append("text")
+  .data(['seq']) 
+  .attr('class', 'date_text')
+  .attr("x", innerWidth-1600)
+  .attr("y", innerHeight / 10 - 35)
+  .attr("dy", ".5em")
+  .style("text-anchor", "start")
+  .attr("fill", "#504f4f")
+  .attr('font-size', '4em')
+  .attr('font-weight', 'bold')
+  .text(time);
+
+
+  circleupdates = g.selectAll('circle').data(seq, d => d[keyHint]);
+  circleenter = circleupdates.enter().append('circle')
+  .attr('cy', (datum) => { return yScale(yValue(datum)) })
+  .attr('cx', (datum) => { return xScale(xValue(datum)) }) 
+  .attr('r', datum => rValue(datum))
+  .attr('fill', function(d,i) { return color[d[keyHint]] })
+  .attr('opacity', 0.5)
+  .on('mouseover',function(event, d){
+    d3.select(this)
+      .append("title")
+      .text(() => {
+        return d["软件"] + "\n" + "今天使用"+ d["新增使用时间"]+"分钟" + "\n" + "累计使用"+ d["使用时间"]+"分钟"
+      })
+  })
+  .on('mouseout',function(d){
+    d3.select(this)
+      .select("title")
+      .remove()
+  })
+
+
+  circleupdates.merge(circleenter).transition().ease(d3.easeLinear).duration(aduration)
+  .attr('cy', (datum) => { return yScale(yValue(datum)) })
+  .attr('cx', (datum) => { return xScale(xValue(datum)) }) 
+  .attr('r',  rValue);
+
+  textupdates = g.selectAll('.app_text').data(seq)
+   textenter = textupdates.enter().append('text')
+  .attr("class", "app_text")
+  .attr("x", (datum) => { return xScale(xValue(datum)); })
+  .attr("y", (datum) => { return yScale(yValue(datum)); })
+  .attr("dy", "0.4em")
+  //.attr('font-size', "2em")
+  .style("text-anchor", "middle")
+  .attr("fill", "#333333")
+  .text(function (d,i) { 
+  return d[keyHint];
+ })
+ 
+
+ textupdates.merge(textenter).transition().ease(d3.easeLinear).duration(aduration)
+ .attr('x', (datum) => { return xScale(xValue(datum)); })
+ .attr('y', (datum) => { return yScale(yValue(datum)); })
+ .attr('font-size', d =>
+  //console.log(d["使用时间"]/250);
+   `${d["使用时间"]/250}em`)
+ };
+
+
+d3.csv('./app-time31.csv').then(function(data){
+  data.forEach(datum => {
+  // pre-process the data; 
+  datum['使用时间'] = +(datum['使用时间']);
+  datum['新增使用时间'] = +(datum['新增使用时间']);
+  });
+ 
+  // remove duplicated items; 
+  alldates = Array.from(new Set(data.map( datum => datum['日期'])));
+
+  // make sure dates are listed according to real time order; 
+  alldates = alldates.sort(function(a,b){
+  return new Date(b.date) - new Date(a.date);
+  });
+  dates = alldates;
+
+  // re-arrange the data sequentially; 
+  sequential = []; 
+  alldates.forEach(datum => {
+  sequential.push([]);
+  });
+  data.forEach(datum => {
+  sequential[alldates.indexOf(datum['日期'])].push(datum);
+  });
+  renderinit(data, sequential[0]);
+
+  // set the animation interval; 
+  let c = 0; 
+  intervalId = setInterval(function(){
+  if(c >= alldates.length){
+    console.log('time to close this animation');
+    clearInterval(intervalId); 
+    }
+    else{
+         renderupdate(sequential[c]);
+         c = c + 1;
+        }
+    }, aduration); 
+});
+  
+</script>
+</body>
+</html>
